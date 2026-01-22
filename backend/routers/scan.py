@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from supabase import create_client, Client
 from apify_client import ApifyClient
 from dotenv import load_dotenv
+from utils.scraper import scrape_company_website
 
 # Load env ngay lập tức để tránh lỗi Supabase URL missing
 load_dotenv()
@@ -101,6 +102,10 @@ async def start_scan(payload: ScanRequest):
             # --- FEATURE PARITY: Chạy đủ 3 luồng check ---
             speed = get_real_pagespeed(website)
             tech = detect_tech_stack(website) # <-- Đã thêm lại logic này
+            
+            # --- NEW: Scrape Socials & Emails ---
+            scraped_data = scrape_company_website(website)
+            
             has_ssl = website.startswith("https")
             
             # Logic: Web chậm, ko SSL hoặc dùng Wordpress là tiềm năng
@@ -116,7 +121,10 @@ async def start_scan(payload: ScanRequest):
                 "has_ssl": has_ssl,
                 "pagespeed_score": speed,
                 "is_wordpress": tech['is_wordpress'],
-                "crm_system": tech['crm'], # <-- Trường này DB cần có
+                "crm_system": tech['crm'], 
+                "emails": scraped_data['emails'],     # <-- From Scraper
+                "socials": scraped_data['socials'],   # <-- From Scraper
+                "description": scraped_data['description'], # <-- From Scraper
                 "status": "QUALIFIED" if is_qualified else "DISQUALIFIED",
                 "disqualify_reason": None if is_qualified else "High Performance Site",
                 "search_keyword": f"{payload.keyword} - {payload.location}"

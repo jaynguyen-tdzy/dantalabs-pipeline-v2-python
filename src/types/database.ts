@@ -22,6 +22,11 @@ export interface Company {
   crm_system: string | null;
   // ----------------------
 
+  // Scraper Data
+  emails?: string[];
+  socials?: Record<string, string>;
+  description?: string;
+
   status: CompanyStatus;
   disqualify_reason: string | null;
 }
