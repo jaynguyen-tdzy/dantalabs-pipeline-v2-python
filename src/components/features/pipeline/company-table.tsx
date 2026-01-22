@@ -25,7 +25,7 @@ export function CompanyTable({ data }: { data: Company[] }) {
 
   // Helper: PageSpeed Score Color Logic (Đổi gray sang black, thêm font-bold)
   const getScoreColor = (score: number | null) => {
-    if (!score) return "text-black"; 
+    if (!score) return "text-black";
     if (score < 50) return "text-red-600 font-bold"; // Slow -> Red
     if (score < 90) return "text-yellow-600 font-bold"; // Average -> Yellow
     return "text-green-600 font-bold"; // Fast -> Green
@@ -39,6 +39,7 @@ export function CompanyTable({ data }: { data: Company[] }) {
             {/* Cập nhật Header sang màu đen đậm */}
             <TableHead className="text-black font-bold">Company Name</TableHead>
             <TableHead className="text-black font-bold">Website Audit</TableHead>
+            <TableHead className="text-black font-bold">Socials</TableHead>
             <TableHead className="text-black font-bold">Performance</TableHead>
             <TableHead className="text-black font-bold">Status</TableHead>
             <TableHead className="text-right text-black font-bold">Actions</TableHead>
@@ -51,9 +52,9 @@ export function CompanyTable({ data }: { data: Company[] }) {
               <TableCell className="font-medium text-black">
                 <div className="text-base font-bold">{company.name}</div>
                 {company.website_url && (
-                  <a 
-                    href={company.website_url} 
-                    target="_blank" 
+                  <a
+                    href={company.website_url}
+                    target="_blank"
                     // Đổi sang màu xanh đậm hơn và in đậm
                     className="text-xs text-blue-700 flex items-center gap-1 hover:underline font-semibold"
                   >
@@ -77,7 +78,25 @@ export function CompanyTable({ data }: { data: Company[] }) {
                 </div>
               </TableCell>
 
-              {/* Column 3: PageSpeed Score */}
+              {/* Column 3: Socials & Emails (NEW) */}
+              <TableCell>
+                <div className="flex flex-col gap-1">
+                  <div className="flex gap-2 flex-wrap">
+                    {company.socials && Object.entries(company.socials).map(([platform, url]) => (
+                      <a key={platform} href={url as string} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 capitalize text-xs font-semibold">
+                        {platform}
+                      </a>
+                    ))}
+                  </div>
+                  {company.emails && company.emails.length > 0 && (
+                    <span className="text-xs text-slate-600 font-medium">
+                      📧 {company.emails.length} emails found
+                    </span>
+                  )}
+                </div>
+              </TableCell>
+
+              {/* Column 4: PageSpeed Score */}
               <TableCell>
                 <div className={`flex items-center gap-1 text-base ${getScoreColor(company.pagespeed_score)}`}>
                   <Gauge className="h-4 w-4" />

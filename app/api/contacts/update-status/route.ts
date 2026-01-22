@@ -4,7 +4,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const pythonUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-    
+
     // Lưu ý: Endpoint bên Python là /contacts/update-status
     console.log(`🚀 Proxying UPDATE STATUS to Python: ${pythonUrl}/contacts/update-status`);
 
@@ -17,6 +17,9 @@ export async function POST(request: Request) {
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });
 
+    return NextResponse.json(data, { status: res.status });
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
   } catch (error: any) {
     return NextResponse.json({ success: false, error: "Cannot connect to Python Backend" }, { status: 500 });
   }

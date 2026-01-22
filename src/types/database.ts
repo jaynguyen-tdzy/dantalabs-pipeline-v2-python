@@ -38,6 +38,14 @@ export interface Contact {
   position: string;
   linkedin_url: string | null;
   email: string | null;
+
+  // Extended fields
+  seniority?: string;
+  language?: string;
+  years_in_company?: string;
+  twitter_url?: string;
+  facebook_url?: string;
+
   is_primary_decision_maker: boolean;
   status?: string;
 }

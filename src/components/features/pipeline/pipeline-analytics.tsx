@@ -1,13 +1,14 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import { Company, Contact } from "@/types/database";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   Cell,
   PieChart,
@@ -16,12 +17,12 @@ import {
 } from "recharts";
 
 interface PipelineAnalyticsProps {
-  companies: any[];
-  contacts: any[];
+  companies: Company[];
+  contacts: Contact[];
 }
 
 export function PipelineAnalytics({ companies, contacts }: PipelineAnalyticsProps) {
-  
+
   // 1. Tính toán số liệu cho Phễu chuyển đổi (Funnel)
   const totalScanned = companies.length;
   const totalQualified = companies.filter(c => c.status === 'QUALIFIED').length;
@@ -51,7 +52,7 @@ export function PipelineAnalytics({ companies, contacts }: PipelineAnalyticsProp
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
-      
+
       {/* BIỂU ĐỒ 1: SALES FUNNEL (PHỄU) */}
       <Card>
         <CardHeader>
@@ -62,9 +63,9 @@ export function PipelineAnalytics({ companies, contacts }: PipelineAnalyticsProp
             <BarChart data={funnelData} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" horizontal={false} />
               <XAxis type="number" />
-              <YAxis dataKey="name" type="category" width={80} tick={{fontSize: 12}} />
-              <Tooltip 
-                cursor={{fill: 'transparent'}}
+              <YAxis dataKey="name" type="category" width={80} tick={{ fontSize: 12 }} />
+              <Tooltip
+                cursor={{ fill: 'transparent' }}
                 contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
               />
               <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={40}>
@@ -99,7 +100,7 @@ export function PipelineAnalytics({ companies, contacts }: PipelineAnalyticsProp
                 ))}
               </Pie>
               <Tooltip />
-              <Legend verticalAlign="bottom" height={36}/>
+              <Legend verticalAlign="bottom" height={36} />
             </PieChart>
           </ResponsiveContainer>
         </CardContent>
