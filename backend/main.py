@@ -4,10 +4,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
-# --- FIX: Load biến môi trường TRƯỚC KHI import routers ---
+# --- FIX: Load biến môi trường NGAY LẬP TỨC ---
 load_dotenv()
 
-# Bây giờ mới được import, vì bên trong các file này sẽ gọi os.getenv ngay lập tức
+# Import routers sau khi đã load env
 from routers import scan, enrich, draft, contacts
 
 app = FastAPI(

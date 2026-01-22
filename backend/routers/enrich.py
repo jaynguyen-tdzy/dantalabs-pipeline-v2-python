@@ -28,7 +28,7 @@ async def enrich_company(payload: EnrichRequest):
     
     # 1. Prompt Logic (Sử dụng Grounding - AI tự Search)
     prompt = f"""
-    Find 1-3 key decision makers (CEO, Founder, CTO, Marketing Director) for the company "{payload.companyName}".
+    Find 1 to 5 key decision makers (CEO, Founder, CTO, Marketing Director) for the company "{payload.companyName}".
     
     TASK:
     - Search for their real names and LinkedIn profiles on the web.
@@ -53,16 +53,11 @@ async def enrich_company(payload: EnrichRequest):
         if not response_text:
             return {"success": False, "message": "AI could not find information."}
 
-        # 3. Clean JSON (Đôi khi AI trả về markdown ```json ... ```)
-        clean_text = response_text.replace("```json", "").replace("```", "").strip()
-        
-        # Xử lý trường hợp AI trả về text kèm lời dẫn
-        start_idx = clean_text.find("[")
-        end_idx = clean_text.rfind("]")
-        if start_idx != -1 and end_idx != -1:
-            clean_text = clean_text[start_idx:end_idx+1]
-        
-        parsed_contacts = json.loads(clean_text)
+        if not response_text:
+            return {"success": False, "message": "AI could not find information."}
+
+        # 3. Clean & Parse JSON (Sử dụng Helper mới)
+        parsed_contacts = gemini_client.clean_and_parse_json(response_text)
 
         if not parsed_contacts:
              return {"success": False, "message": "No contacts found."}

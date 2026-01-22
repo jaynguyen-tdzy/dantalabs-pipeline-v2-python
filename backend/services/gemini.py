@@ -9,9 +9,37 @@ load_dotenv()
 class GeminiClient:
     def __init__(self):
         self.api_key = os.getenv("GOOGLE_API_KEY")
-        # Sử dụng model ổn định. Nếu vẫn lỗi 404, hãy thử đổi thành "gemini-pro"
-        self.model = "gemini-1.5-turbo" 
+        # Sử dụng model từ env hoặc mặc định ổn định
+        self.model = os.getenv("GEMINI_MODEL", "gemini-2.0-flash") 
         self.base_url = "https://generativelanguage.googleapis.com/v1beta/models"
+
+    def clean_and_parse_json(self, text: str):
+        """Helper để làm sạch và parse JSON từ AI response"""
+        if not text: return None
+        
+        try:
+            # 1. Remove markdown
+            clean_text = text.replace("```json", "").replace("```", "").strip()
+            
+            # 2. Extract JSON part if mixed with text
+            start_idx = clean_text.find("{")
+            start_arr_idx = clean_text.find("[")
+            
+            # Ưu tiên object hoặc array tùy cái nào xuất hiện trước
+            if start_idx != -1 and (start_arr_idx == -1 or start_idx < start_arr_idx):
+                end_idx = clean_text.rfind("}")
+                if end_idx != -1:
+                    clean_text = clean_text[start_idx:end_idx+1]
+            elif start_arr_idx != -1:
+                end_idx = clean_text.rfind("]")
+                if end_idx != -1:
+                    clean_text = clean_text[start_arr_idx:end_idx+1]
+            
+            return json.loads(clean_text)
+        except Exception as e:
+            print(f"❌ JSON Parse Error: {e}")
+            print(f"Raw text was: {text}")
+            return None
 
     def generate_with_search(self, prompt: str, use_grounding: bool = True):
         headers = {"Content-Type": "application/json"}

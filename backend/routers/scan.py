@@ -35,7 +35,10 @@ def get_real_pagespeed(url: str):
         if res.status_code == 200:
             score = res.json()['lighthouseResult']['categories']['performance']['score']
             return int(score * 100)
-    except: pass
+            score = res.json()['lighthouseResult']['categories']['performance']['score']
+            return int(score * 100)
+    except Exception as e:
+        print(f"⚠️ PageSpeed Error for {url}: {e}")
     return 0
 
 def detect_tech_stack(url: str):
@@ -66,7 +69,10 @@ def detect_tech_stack(url: str):
         
         return {"is_wordpress": is_wordpress, "crm": crm}
         
-    except:
+        return {"is_wordpress": is_wordpress, "crm": crm}
+        
+    except Exception as e:
+        print(f"⚠️ Tech Detect Error for {url}: {e}")
         return {"is_wordpress": False, "crm": None}
 
 @router.post("/")

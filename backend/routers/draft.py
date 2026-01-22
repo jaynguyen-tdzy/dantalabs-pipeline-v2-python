@@ -59,13 +59,13 @@ async def generate_draft(payload: DraftRequest):
         if not response_text:
              raise Exception("AI returned empty response")
 
-        clean_text = response_text.replace("```json", "").replace("```", "").strip()
-        start = clean_text.find("{")
-        end = clean_text.rfind("}")
-        if start != -1 and end != -1:
-            clean_text = clean_text[start:end+1]
+        if not response_text:
+             raise Exception("AI returned empty response")
 
-        draft_data = json.loads(clean_text)
+        draft_data = gemini_client.clean_and_parse_json(response_text)
+        if not draft_data:
+             raise Exception("Failed to parse AI response")
+             
         return {"success": True, "data": draft_data}
 
     except Exception as e:

@@ -7,11 +7,11 @@ export interface Company {
   website_url: string | null;
   google_maps_url: string | null;
   industry: string | null;
-  
+
   // Thông tin kỹ thuật cũ
   has_ssl: boolean;
   pagespeed_score: number | null;
-  
+
   // --- CÁC TRƯỜNG MỚI ---
   address: string | null;
   company_type: string | null;
@@ -24,4 +24,15 @@ export interface Company {
 
   status: CompanyStatus;
   disqualify_reason: string | null;
+}
+
+export interface Contact {
+  id: string;
+  company_id: string;
+  full_name: string;
+  position: string;
+  linkedin_url: string | null;
+  email: string | null;
+  is_primary_decision_maker: boolean;
+  status?: string;
 }
