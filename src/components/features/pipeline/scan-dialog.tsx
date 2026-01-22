@@ -21,30 +21,57 @@ export function ScanDialog() {
   const [open, setOpen] = useState(false);
   const [keyword, setKeyword] = useState("");
   const [loading, setLoading] = useState(false);
+  // States cho error/suggestion
+  const [message, setMessage] = useState<string | null>(null);
+  const [suggestion, setSuggestion] = useState<string | null>(null);
   const router = useRouter();
 
   const handleScan = async () => {
     if (!keyword) return;
 
     setLoading(true);
+    setMessage(null);
+    setSuggestion(null);
+
     try {
-      // Gọi API scan chúng ta vừa tạo
       const res = await fetch("/api/scan", {
         method: "POST",
         body: JSON.stringify({ keyword }),
       });
 
-      if (res.ok) {
+      const data = await res.json();
+
+      if (res.ok && data.success) {
         setOpen(false);
         setKeyword("");
-        router.refresh(); // Tự động load lại dữ liệu mới
+        router.refresh();
+
+        // Notification for fallback
+        if (data.is_fallback) {
+          alert(`Note: Your specific search yielded 0 results. System auto-switched to broad keyword: "${data.fallback_keyword}" and found ${data.count} companies.`);
+        }
       } else {
-        console.error("Scan failed");
+        // Backend trả về OK nhưng success=false (do logic filter/no results)
+        // hoặc lỗi 500
+        console.error("Scan failed", data);
+        setMessage(data.message || "Something went wrong.");
+        if (data.suggestion) {
+          setSuggestion(data.suggestion);
+        }
       }
     } catch (error) {
       console.error("Scan error", error);
+      setMessage("Failed to connect to server.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const applySuggestion = () => {
+    if (suggestion) {
+      setKeyword(suggestion);
+      setSuggestion(null);
+      setMessage(null);
     }
   };
 
@@ -75,6 +102,25 @@ export function ScanDialog() {
               onChange={(e) => setKeyword(e.target.value)}
             />
           </div>
+
+          {/* Display Messages & Suggestions */}
+          {message && (
+            <div className="rounded-md bg-yellow-50 p-4 text-sm text-yellow-800">
+              <div>{message}</div>
+              {suggestion && (
+                <div className="mt-2">
+                  <span className="font-semibold">Suggestion: </span>
+                  <button
+                    onClick={applySuggestion}
+                    className="underline hover:text-yellow-900 font-bold"
+                  >
+                    Use "{suggestion}"
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
         </div>
         <DialogFooter>
           <Button onClick={handleScan} disabled={loading}>

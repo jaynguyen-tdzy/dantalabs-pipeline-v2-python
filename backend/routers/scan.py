@@ -5,7 +5,9 @@ from pydantic import BaseModel
 from supabase import create_client, Client
 from apify_client import ApifyClient
 from dotenv import load_dotenv
+from dotenv import load_dotenv
 from utils.scraper import scrape_company_website
+from services.gemini import GeminiClient
 
 # Load env ngay lập tức để tránh lỗi Supabase URL missing
 load_dotenv()
@@ -80,62 +82,136 @@ def detect_tech_stack(url: str):
 async def start_scan(payload: ScanRequest):
     print(f"🔍 Scan: {payload.keyword} in {payload.location}")
     
-    # 1. Gọi Apify (Google Maps)
-    run_input = {
-        "searchStringsArray": [f"{payload.keyword} in {payload.location}"],
-        "maxCrawledPlacesPerSearch": payload.limit,
-        "language": "en", "maxImages": 0
-    }
+    # 0. Tối ưu từ khóa tìm kiếm bằng Gemini
+    gemini_client = GeminiClient()
+    optimized_data = gemini_client.optimize_search_term(payload.keyword, payload.location)
     
-    try:
-        run = apify_client.actor("compass/crawler-google-places").call(run_input=run_input)
-        dataset = apify_client.dataset(run["defaultDatasetId"]).list_items()
-        items = dataset.items
+    search_query = f"{payload.keyword} in {payload.location}" # Fallback
+    if optimized_data and optimized_data.get("q"):
+        search_query = optimized_data["q"]
+        print(f"✨ Optimized Scan Query: {search_query} (Original: {payload.keyword})")
+
+    def normalize_text(text: str):
+        import unicodedata
+        return "".join(c for c in unicodedata.normalize("NFD", text) if unicodedata.category(c) != "Mn").lower()
+
+    async def perform_search(query: str, strict_mode: bool = True):
+        print(f"🚀 Running Scan with Query: {query} (Strict: {strict_mode})")
+        run_input = {
+            "searchStringsArray": [query],
+            "maxCrawledPlacesPerSearch": payload.limit,
+            "language": "en", "maxImages": 0
+        }
         
-        if not items: return {"success": False, "message": "No results"}
+        try:
+            run = apify_client.actor("compass/crawler-google-places").call(run_input=run_input)
+            dataset = apify_client.dataset(run["defaultDatasetId"]).list_items()
+            items = dataset.items
+            
+            if not items: return []
 
-        processed = []
-        for item in items:
-            website = item.get('website')
-            if not website: continue # Bỏ qua nếu ko có web
+            processed_items = []
             
-            # --- FEATURE PARITY: Chạy đủ 3 luồng check ---
-            speed = get_real_pagespeed(website)
-            tech = detect_tech_stack(website) # <-- Đã thêm lại logic này
+            # Normalize location key safely
+            raw_loc = payload.location.lower()
+            norm_loc = normalize_text(raw_loc)
             
-            # --- NEW: Scrape Socials & Emails ---
-            scraped_data = scrape_company_website(website)
+            # Define aliases
+            valid_locs = [raw_loc, norm_loc]
             
-            has_ssl = website.startswith("https")
-            
-            # Logic: Web chậm, ko SSL hoặc dùng Wordpress là tiềm năng
-            is_qualified = speed < 50 or not has_ssl or tech['is_wordpress']
-            
-            processed.append({
-                "name": item.get('title'),
-                "website_url": website,
-                "google_maps_url": item.get('url'),
-                "industry": item.get('categoryName', 'Unknown'),
-                "address": item.get('address'),
-                "phone": item.get('phone'),
-                "has_ssl": has_ssl,
-                "pagespeed_score": speed,
-                "is_wordpress": tech['is_wordpress'],
-                "crm_system": tech['crm'], 
-                "emails": scraped_data['emails'],     # <-- From Scraper
-                "socials": scraped_data['socials'],   # <-- From Scraper
-                "description": scraped_data['description'], # <-- From Scraper
-                "status": "QUALIFIED" if is_qualified else "DISQUALIFIED",
-                "disqualify_reason": None if is_qualified else "High Performance Site",
-                "search_keyword": f"{payload.keyword} - {payload.location}"
-            })
-            
-        if processed:
-            data = supabase.table("companies").insert(processed).execute()
-            return {"success": True, "count": len(processed), "data": data.data}
-            
-        return {"success": True, "message": "No valid targets found"}
+            # 1. Handle "City" stripped version (e.g. "Ho Chi Minh City" -> "Ho Chi Minh")
+            if "city" in norm_loc:
+                valid_locs.append(norm_loc.replace("city", "").strip())
+                
+            # 2. Specific aliases for HCMC
+            if "ho chi minh" in norm_loc or "hcm" in norm_loc:
+                valid_locs.extend(["hcm", "hc", "saigon", "sai gon", "tp.hcm", "tphcm", "thanh pho ho chi minh"])
+                
+            print(f"DEBUG: Valid Locations: {valid_locs}")
 
-    except Exception as e:
-        print(f"🔥 Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+            for item in items:
+                # --- STRICT LOCATION CHECK (Only if strict_mode is True) ---
+                if strict_mode:
+                    address = item.get('address')
+                    if not address: continue
+
+                    address_norm = normalize_text(address)
+                    
+                    # Check if ANY valid location string is in the address
+                    is_valid_loc = any(loc in address_norm for loc in valid_locs)
+                    
+                    if not is_valid_loc:
+                        print(f"⚠️ Skipping result outside {payload.location}: {item.get('title')} ({address})")
+                        continue
+
+                website = item.get('website')
+                if not website: continue 
+                
+                # --- PROCESSING ---
+                speed = get_real_pagespeed(website)
+                tech = detect_tech_stack(website) 
+                scraped_data = scrape_company_website(website)
+                has_ssl = website.startswith("https")
+                is_qualified = speed < 50 or not has_ssl or tech['is_wordpress']
+                
+                processed_items.append({
+                    "name": item.get('title'),
+                    "website_url": website,
+                    "google_maps_url": item.get('url'),
+                    "industry": item.get('categoryName', 'Unknown'),
+                    "address": item.get('address'),
+                    "phone": item.get('phone'),
+                    "has_ssl": has_ssl,
+                    "pagespeed_score": speed,
+                    "is_wordpress": tech['is_wordpress'],
+                    "crm_system": tech['crm'], 
+                    "emails": scraped_data['emails'],
+                    "socials": scraped_data['socials'],
+                    "description": scraped_data['description'],
+                    "status": "QUALIFIED" if is_qualified else "DISQUALIFIED",
+                    "disqualify_reason": None if is_qualified else "High Performance Site",
+                    "search_keyword": query
+                })
+            return processed_items
+        except Exception as e:
+            print(f"🔥 Apify/Processing Error: {e}")
+            return []
+
+    # 1. First Attempt
+    processed = await perform_search(search_query)
+    
+    # 2. Fallback if no results
+    is_fallback = False
+    suggestion = None
+    
+    if not processed:
+        print("⚠️ No valid results found. Attempting fallback...")
+        suggestion = gemini_client.suggest_better_query(payload.keyword, payload.location)
+        
+        if suggestion:
+            print(f"💡 Fallback Query Suggestion: {suggestion}")
+            # Relax strict check for fallback to ensure we get results
+            processed = await perform_search(f"{suggestion} in {payload.location}", strict_mode=False)
+            if processed:
+                is_fallback = True
+
+    # 3. Save & Return
+    if processed:
+        data = supabase.table("companies").insert(processed).execute()
+        response = {
+            "success": True, 
+            "count": len(processed), 
+            "data": data.data,
+            "is_fallback": is_fallback,
+            "fallback_keyword": suggestion if is_fallback else None
+        }
+        print(f"✅ returning success: {response.keys()}")
+        return response
+        
+    response = {
+        "success": False, 
+        "message": f"No valid results found in {payload.location} even after fallback.",
+        "suggestion": suggestion
+    }
+    print(f"❌ returning failure: {response}")
+    return response
