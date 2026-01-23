@@ -7,8 +7,11 @@ export async function POST(request: Request) {
     // Trỏ thẳng sang Python Backend
     let pythonUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-    // Ensure absolute URL for server-side fetch (Vercel fix)
-    if (pythonUrl.startsWith("/")) {
+    // Fix: Ensure absolute URL using VERCEL_URL if available
+    if (process.env.VERCEL_URL) {
+      pythonUrl = `https://${process.env.VERCEL_URL}/api/python`;
+    } else if (pythonUrl.startsWith("/")) {
+      // Fallback for local or other environments
       const host = request.headers.get("host");
       const protocol = host?.includes("localhost") ? "http" : "https";
       pythonUrl = `${protocol}://${host}${pythonUrl}`;
@@ -32,13 +35,12 @@ export async function POST(request: Request) {
 
     return NextResponse.json(data);
 
-    return NextResponse.json(data);
-
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error("🔥 Proxy Error:", error);
+    // Return ACTUAL error for debugging
     return NextResponse.json(
-      { success: false, error: "Cannot connect to Python Backend" },
+      { success: false, error: `Proxy Error: ${error.message || error.toString()}`, details: error },
       { status: 500 }
     );
   }
