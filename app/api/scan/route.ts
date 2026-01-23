@@ -5,10 +5,8 @@ export async function POST(request: Request) {
     const body = await request.json();
     let pythonUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-    // Fix: Ensure absolute URL using VERCEL_URL if available
-    if (process.env.VERCEL_URL) {
-      pythonUrl = `https://${process.env.VERCEL_URL}/api/python`;
-    } else if (pythonUrl.startsWith("/")) {
+    // Fix: Use Host header to ensure backend URL matches the current domain (for Cookies)
+    if (pythonUrl.startsWith("/")) {
       const host = request.headers.get("host");
       const protocol = host?.includes("localhost") ? "http" : "https";
       pythonUrl = `${protocol}://${host}${pythonUrl}`;

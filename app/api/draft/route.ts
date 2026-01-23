@@ -5,7 +5,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     let pythonUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-    // Ensure absolute URL for server-side fetch (Vercel fix)
+    // Fix: Use Host header to ensure backend URL matches the current domain (for Cookies)
     if (pythonUrl.startsWith("/")) {
       const host = request.headers.get("host");
       const protocol = host?.includes("localhost") ? "http" : "https";
