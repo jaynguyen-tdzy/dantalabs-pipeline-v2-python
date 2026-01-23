@@ -5,7 +5,14 @@ export async function POST(request: Request) {
     const body = await request.json();
 
     // Trỏ thẳng sang Python Backend
-    const pythonUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    let pythonUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+    // Ensure absolute URL for server-side fetch (Vercel fix)
+    if (pythonUrl.startsWith("/")) {
+      const host = request.headers.get("host");
+      const protocol = host?.includes("localhost") ? "http" : "https";
+      pythonUrl = `${protocol}://${host}${pythonUrl}`;
+    }
 
     console.log(`🚀 Proxying ENRICH to Python: ${pythonUrl}/enrich`);
 
