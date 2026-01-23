@@ -5,8 +5,10 @@ export async function POST(request: Request) {
     const body = await request.json();
     let pythonUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-    // Ensure absolute URL for server-side fetch (Vercel fix)
-    if (pythonUrl.startsWith("/")) {
+    // Fix: Ensure absolute URL using VERCEL_URL if available
+    if (process.env.VERCEL_URL) {
+      pythonUrl = `https://${process.env.VERCEL_URL}/api/python`;
+    } else if (pythonUrl.startsWith("/")) {
       const host = request.headers.get("host");
       const protocol = host?.includes("localhost") ? "http" : "https";
       pythonUrl = `${protocol}://${host}${pythonUrl}`;
@@ -20,7 +22,15 @@ export async function POST(request: Request) {
       body: JSON.stringify(body),
     });
 
-    const data = await res.json();
+    // Read text first to debug empty/invalid JSON responses
+    const responseText = await res.text();
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (e) {
+      console.error("❌ Failed to parse JSON:", responseText);
+      throw new Error(`Invalid JSON response from Backend: ${responseText.slice(0, 100)}... (Status: ${res.status})`);
+    }
 
     // Nếu Python trả lỗi, trả lỗi về Frontend
     if (!res.ok) {
@@ -30,11 +40,12 @@ export async function POST(request: Request) {
 
     return NextResponse.json(data);
 
-    return NextResponse.json(data);
-
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error("🔥 Proxy Error:", error);
-    return NextResponse.json({ success: false, error: "Cannot connect to Python Backend" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: `Proxy Error: ${error.message || error.toString()}`, details: error },
+      { status: 500 }
+    );
   }
 }
