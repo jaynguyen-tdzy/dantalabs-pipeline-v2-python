@@ -39,28 +39,29 @@ export function DashboardView({ initialCompanies, contacts }: DashboardViewProps
     : initialCompanies.filter(c => (c.search_keyword || c.industry || "Uncategorized") === selectedCampaign);
 
   return (
-    <div className="space-y-8">
+  return (
+    <div className="space-y-4">
 
       {/* KHU VỰC BỘ LỌC (DROPDOWN) */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 rounded-lg border shadow-sm">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-3 rounded-lg border shadow-sm">
         <div>
-          <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-            <Filter className="h-5 w-5 text-slate-500" />
+          <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+            <Filter className="h-4 w-4 text-slate-500" />
             Campaign Filter
           </h2>
-          <p className="text-sm text-slate-500">Select a campaign to view specific performance.</p>
+          <p className="text-xs text-slate-500">Select a campaign to view specific performance.</p>
         </div>
 
         {/* DROPDOWN CHỌN CAMPAIGN */}
-        <div className="w-full sm:w-[300px]">
+        <div className="w-full sm:w-[250px]">
           <Select value={selectedCampaign} onValueChange={setSelectedCampaign}>
-            <SelectTrigger className="w-full font-semibold text-black border-slate-300 bg-white">
+            <SelectTrigger className="w-full h-8 text-xs font-semibold text-black border-slate-300 bg-white">
               <SelectValue placeholder="Select Campaign" />
             </SelectTrigger>
             <SelectContent className="bg-white border-slate-200">
-              <SelectItem value="All" className="font-bold cursor-pointer">All Campaigns</SelectItem>
+              <SelectItem value="All" className="font-bold cursor-pointer text-xs">All Campaigns</SelectItem>
               {allKeywords.map((keyword) => (
-                <SelectItem key={keyword} value={keyword} className="cursor-pointer capitalize">
+                <SelectItem key={keyword} value={keyword} className="cursor-pointer capitalize text-xs">
                   {keyword}
                 </SelectItem>
               ))}
@@ -74,14 +75,14 @@ export function DashboardView({ initialCompanies, contacts }: DashboardViewProps
       <StatsOverview data={filteredCompanies} />
 
       {/* 5. Hiển thị Biểu đồ theo dữ liệu đã lọc */}
-      <div className="space-y-4">
-        <h2 className="text-xl font-semibold text-slate-900">Performance Analytics</h2>
+      <div className="space-y-2">
+        <h2 className="text-base font-semibold text-slate-900">Performance Analytics</h2>
         <PipelineAnalytics companies={filteredCompanies} contacts={contacts} />
       </div>
 
       {/* 6. Hiển thị Bảng theo dữ liệu đã lọc */}
-      <div className="space-y-4">
-        <h2 className="text-xl font-semibold text-slate-900">
+      <div className="space-y-2">
+        <h2 className="text-base font-semibold text-slate-900">
           {selectedCampaign === "All" ? "All Recent Companies" : `Results for: ${selectedCampaign}`}
         </h2>
         <CompanyTable data={filteredCompanies} />

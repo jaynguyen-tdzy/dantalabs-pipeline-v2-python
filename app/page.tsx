@@ -40,8 +40,8 @@ export default async function DashboardPage() {
   const typedContacts = (contacts || []) as Contact[];
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-6">
-      <div className="mx-auto max-w-screen-xl space-y-6">
+    <div className="min-h-screen bg-slate-50 p-2 md:p-4">
+      <div className="w-[98%] mx-auto space-y-4">
 
         {/* Header: Tiêu đề và Nút Scan */}
         <div className="flex items-center justify-between">

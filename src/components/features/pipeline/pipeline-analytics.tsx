@@ -54,21 +54,21 @@ export function PipelineAnalytics({ companies, contacts }: PipelineAnalyticsProp
     <div className="grid gap-4 md:grid-cols-2">
 
       {/* BIỂU ĐỒ 1: SALES FUNNEL (PHỄU) */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Conversion Funnel</CardTitle>
+      <Card className="p-4">
+        <CardHeader className="p-0 pb-4">
+          <CardTitle className="text-sm font-semibold">Conversion Funnel</CardTitle>
         </CardHeader>
-        <CardContent className="h-[300px]">
+        <CardContent className="h-[250px] p-0">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={funnelData} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+            <BarChart data={funnelData} layout="vertical" margin={{ top: 0, right: 30, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-              <XAxis type="number" />
-              <YAxis dataKey="name" type="category" width={80} tick={{ fontSize: 12 }} />
+              <XAxis type="number" fontSize={10} />
+              <YAxis dataKey="name" type="category" width={70} tick={{ fontSize: 10 }} />
               <Tooltip
                 cursor={{ fill: 'transparent' }}
-                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: '12px' }}
               />
-              <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={40}>
+              <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={24}>
                 {funnelData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.fill} />
                 ))}
@@ -79,28 +79,28 @@ export function PipelineAnalytics({ companies, contacts }: PipelineAnalyticsProp
       </Card>
 
       {/* BIỂU ĐỒ 2: LEAD QUALITY (TRÒN) */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Lead Quality Ratio</CardTitle>
+      <Card className="p-4">
+        <CardHeader className="p-0 pb-4">
+          <CardTitle className="text-sm font-semibold">Lead Quality Ratio</CardTitle>
         </CardHeader>
-        <CardContent className="h-[300px]">
+        <CardContent className="h-[250px] p-0">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
                 data={qualityData}
                 cx="50%"
                 cy="50%"
-                innerRadius={60}
-                outerRadius={100}
-                paddingAngle={5}
+                innerRadius={50}
+                outerRadius={80}
+                paddingAngle={4}
                 dataKey="value"
               >
                 {qualityData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
-              <Tooltip />
-              <Legend verticalAlign="bottom" height={36} />
+              <Tooltip contentStyle={{ fontSize: '12px' }} />
+              <Legend verticalAlign="bottom" height={36} iconSize={8} wrapperStyle={{ fontSize: '10px' }} />
             </PieChart>
           </ResponsiveContainer>
         </CardContent>
