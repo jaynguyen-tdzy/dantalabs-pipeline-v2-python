@@ -16,9 +16,15 @@ export async function POST(request: Request) {
 
     console.log(`🚀 Proxying SCAN to Python: ${pythonUrl}/scan`);
 
+    // Fix: Forward Cookies to bypass Vercel Authentication Protection
+    const cookieHeader = request.headers.get("cookie") || "";
+
     const res = await fetch(`${pythonUrl}/scan`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Cookie": cookieHeader, // Forward cookies
+      },
       body: JSON.stringify(body),
     });
 

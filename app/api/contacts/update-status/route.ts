@@ -15,9 +15,15 @@ export async function POST(request: Request) {
     // Lưu ý: Endpoint bên Python là /contacts/update-status
     console.log(`🚀 Proxying UPDATE STATUS to Python: ${pythonUrl}/contacts/update-status`);
 
+    // Fix: Forward Cookies to bypass Vercel Authentication Protection
+    const cookieHeader = request.headers.get("cookie") || "";
+
     const res = await fetch(`${pythonUrl}/contacts/update-status`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Cookie": cookieHeader, // Forward cookies
+      },
       body: JSON.stringify(body),
     });
 
