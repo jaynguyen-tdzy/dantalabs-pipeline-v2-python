@@ -107,20 +107,77 @@ export default async function CompanyDetailPage({
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4 pt-6 flex-1">
-                            <div className="flex justify-between items-center border-b border-gray-100 pb-2">
-                                <span className="text-gray-600 font-semibold">CMS / Web</span>
-                                {company.is_wordpress ? (
-                                    <Badge className="bg-blue-600 font-bold hover:bg-blue-700">WordPress</Badge>
-                                ) : (
-                                    <span className="font-bold text-gray-500">Custom / Other</span>
-                                )}
+                            {/* CMS */}
+                            <div className="flex justify-between items-start border-b border-gray-100 pb-2">
+                                <span className="text-gray-600 font-semibold shrink-0">CMS / Web</span>
+                                <div className="flex flex-wrap gap-1 justify-end">
+                                    {company.tech_stack?.cms && company.tech_stack.cms.length > 0 ? (
+                                        company.tech_stack.cms.map((tech: string) => (
+                                            <Badge key={tech} className="bg-blue-600 font-bold hover:bg-blue-700">{tech}</Badge>
+                                        ))
+                                    ) : company.is_wordpress ? (
+                                        <Badge className="bg-blue-600 font-bold hover:bg-blue-700">WordPress</Badge>
+                                    ) : (
+                                        <span className="font-bold text-gray-500 text-sm">Custom / Other</span>
+                                    )}
+                                </div>
                             </div>
+
+                            {/* Frontend */}
+                            {company.tech_stack?.frontend && company.tech_stack.frontend.length > 0 && (
+                                <div className="flex justify-between items-start border-b border-gray-100 pb-2">
+                                    <span className="text-gray-600 font-semibold shrink-0">Frontend</span>
+                                    <div className="flex flex-wrap gap-1 justify-end">
+                                        {company.tech_stack.frontend.map((tech: string) => (
+                                            <Badge key={tech} variant="outline" className="border-purple-200 text-purple-700 bg-purple-50">{tech}</Badge>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Ecommerce */}
+                            {company.tech_stack?.ecommerce && company.tech_stack.ecommerce.length > 0 && (
+                                <div className="flex justify-between items-start border-b border-gray-100 pb-2">
+                                    <span className="text-gray-600 font-semibold shrink-0">E-commerce</span>
+                                    <div className="flex flex-wrap gap-1 justify-end">
+                                        {company.tech_stack.ecommerce.map((tech: string) => (
+                                            <Badge key={tech} className="bg-green-600 hover:bg-green-700">{tech}</Badge>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Server */}
+                            {company.tech_stack?.server && company.tech_stack.server.length > 0 && (
+                                <div className="flex justify-between items-start border-b border-gray-100 pb-2">
+                                    <span className="text-gray-600 font-semibold shrink-0">Infrastructure</span>
+                                    <div className="flex flex-wrap gap-1 justify-end">
+                                        {company.tech_stack.server.map((tech: string) => (
+                                            <Badge key={tech} variant="secondary" className="bg-gray-200 text-gray-700">{tech}</Badge>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Agents (NEW) */}
+                            {company.tech_stack?.agents && company.tech_stack.agents.length > 0 && (
+                                <div className="flex justify-between items-start border-b border-gray-100 pb-2">
+                                    <span className="text-gray-600 font-semibold shrink-0">AI Agents</span>
+                                    <div className="flex flex-wrap gap-1 justify-end">
+                                        {company.tech_stack.agents.map((tech: string) => (
+                                            <Badge key={tech} className="bg-pink-600 font-bold hover:bg-pink-700">{tech}</Badge>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* CRM */}
                             <div className="flex justify-between items-center pb-2">
-                                <span className="text-gray-600 font-semibold">CRM System</span>
+                                <span className="text-gray-600 font-semibold shrink-0">CRM System</span>
                                 {company.crm_system ? (
                                     <Badge className="bg-orange-500 font-bold hover:bg-orange-600">{company.crm_system}</Badge>
                                 ) : (
-                                    <span className="font-bold text-gray-400 italic">Not Detected</span>
+                                    <span className="font-bold text-gray-400 italic text-sm">Not Detected</span>
                                 )}
                             </div>
                         </CardContent>
@@ -145,8 +202,13 @@ export default async function CompanyDetailPage({
                             </div>
                             <div className="flex justify-between items-center border-b border-gray-100 pb-2">
                                 <span className="text-gray-600 font-semibold">PageSpeed</span>
-                                <span className={`text-xl font-extrabold ${!company.pagespeed_score || company.pagespeed_score < 50 ? 'text-red-600' : 'text-green-600'}`}>
-                                    {company.pagespeed_score ?? "N/A"}/100
+                                <span className={`text-xl font-extrabold ${(company.pagespeed_score === null || company.pagespeed_score === undefined)
+                                        ? 'text-gray-400'
+                                        : company.pagespeed_score < 50
+                                            ? 'text-red-600'
+                                            : 'text-green-600'
+                                    }`}>
+                                    {company.pagespeed_score ?? "Error"}/100
                                 </span>
                             </div>
                             <div className="flex justify-between items-center pt-1">

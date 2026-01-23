@@ -20,6 +20,13 @@ export interface Company {
   is_wordpress: boolean;
   search_keyword?: string
   crm_system: string | null;
+
+  tech_stack?: {
+    cms: string[];
+    frontend: string[];
+    server: string[];
+    ecommerce: string[];
+  };
   // ----------------------
 
   // Scraper Data

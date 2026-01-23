@@ -49,9 +49,12 @@ class GeminiClient:
             "contents": [{"parts": [{"text": prompt}]}],
             "generationConfig": {
                 "temperature": 0.3, # Nhiệt độ thấp để AI tập trung vào sự thật
-                "response_mime_type": "application/json" 
             }
         }
+
+        # JSON mode is not supported with tools/grounding on some models
+        if not use_grounding:
+            payload["generationConfig"]["response_mime_type"] = "application/json"
 
         # Kích hoạt Google Search Grounding (công cụ tìm kiếm)
         if use_grounding:

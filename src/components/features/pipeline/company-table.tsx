@@ -25,7 +25,7 @@ export function CompanyTable({ data }: { data: Company[] }) {
 
   // Helper: PageSpeed Score Color Logic (Đổi gray sang black, thêm font-bold)
   const getScoreColor = (score: number | null) => {
-    if (!score) return "text-black";
+    if (score === null || score === undefined) return "text-gray-400 font-bold";
     if (score < 50) return "text-red-600 font-bold"; // Slow -> Red
     if (score < 90) return "text-yellow-600 font-bold"; // Average -> Yellow
     return "text-green-600 font-bold"; // Fast -> Green
@@ -100,7 +100,7 @@ export function CompanyTable({ data }: { data: Company[] }) {
               <TableCell>
                 <div className={`flex items-center gap-1 text-base ${getScoreColor(company.pagespeed_score)}`}>
                   <Gauge className="h-4 w-4" />
-                  <span>{company.pagespeed_score ?? "N/A"}/100</span>
+                  <span>{company.pagespeed_score ?? "Error"}/100</span>
                 </div>
               </TableCell>
 

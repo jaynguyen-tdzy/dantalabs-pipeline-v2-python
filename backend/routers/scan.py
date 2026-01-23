@@ -5,12 +5,16 @@ from pydantic import BaseModel
 from supabase import create_client, Client
 from apify_client import ApifyClient
 from dotenv import load_dotenv
-from dotenv import load_dotenv
 from utils.scraper import scrape_company_website
 from services.gemini import GeminiClient
+from utils.tech_detector import TechStackDetector
 
-# Load env ngay lập tức để tránh lỗi Supabase URL missing
-load_dotenv()
+# Load env variables from multiple potential sources
+if os.path.exists(".env.local"):
+    load_dotenv(".env.local")
+if os.path.exists("backend/.env"):
+    load_dotenv("backend/.env")
+load_dotenv() # Fallback to standard .env
 
 router = APIRouter(prefix="/scan", tags=["Scanning"])
 
@@ -31,59 +35,33 @@ class ScanRequest(BaseModel):
 
 def get_real_pagespeed(url: str):
     """Lấy điểm PageSpeed thật từ Google"""
-    if not url or not google_api_key: return 0
+    if not url or not google_api_key: return None
     try:
         api_url = f"https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url={url}&strategy=mobile&key={google_api_key}"
-        res = requests.get(api_url, timeout=10)
+        res = requests.get(api_url, timeout=30)
         if res.status_code == 200:
             score = res.json()['lighthouseResult']['categories']['performance']['score']
             return int(score * 100)
-            score = res.json()['lighthouseResult']['categories']['performance']['score']
-            return int(score * 100)
+        else:
+            try:
+                error_msg = res.json().get('error', {}).get('message', res.text)
+            except:
+                error_msg = res.text[:200]
+            print(f"⚠️ PageSpeed API Error: {res.status_code} - {error_msg}")
     except Exception as e:
         print(f"⚠️ PageSpeed Error for {url}: {e}")
-    return 0
+    return None
 
-def detect_tech_stack(url: str):
-    """
-    KIỂM TRA CÔNG NGHỆ (Giống file JS cũ)
-    Check: WordPress, HubSpot, Salesforce, Zoho, Bitrix24
-    """
-    if not url: return {"is_wordpress": False, "crm": None}
-    
-    try:
-        # Giả lập trình duyệt để không bị chặn
-        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
-        res = requests.get(url, headers=headers, timeout=5)
-        
-        if res.status_code != 200: return {"is_wordpress": False, "crm": None}
-        
-        html = res.text.lower()
-        
-        # 1. Check WordPress
-        is_wordpress = 'wp-content' in html or 'wp-includes' in html
-        
-        # 2. Check CRM
-        crm = None
-        if 'js.hs-scripts.com' in html or 'hubspot' in html: crm = "HubSpot"
-        elif 'salesforce' in html or 'pardot' in html: crm = "Salesforce"
-        elif 'zoho' in html: crm = "Zoho CRM"
-        elif 'bitrix24' in html: crm = "Bitrix24"
-        
-        return {"is_wordpress": is_wordpress, "crm": crm}
-        
-        return {"is_wordpress": is_wordpress, "crm": crm}
-        
-    except Exception as e:
-        print(f"⚠️ Tech Detect Error for {url}: {e}")
-        return {"is_wordpress": False, "crm": None}
+# (Empty - removed old detect_tech_stack function)
 
 @router.post("/")
 async def start_scan(payload: ScanRequest):
     print(f"🔍 Scan: {payload.keyword} in {payload.location}")
     
+    # ... (Optimization logic remains same) ...
     # 0. Tối ưu từ khóa tìm kiếm bằng Gemini
     gemini_client = GeminiClient()
+    tech_detector = TechStackDetector()
     optimized_data = gemini_client.optimize_search_term(payload.keyword, payload.location)
     
     search_query = f"{payload.keyword} in {payload.location}" # Fallback
@@ -96,6 +74,7 @@ async def start_scan(payload: ScanRequest):
         return "".join(c for c in unicodedata.normalize("NFD", text) if unicodedata.category(c) != "Mn").lower()
 
     async def perform_search(query: str, strict_mode: bool = True):
+        # ... (Search logic remains same) ...
         print(f"🚀 Running Scan with Query: {query} (Strict: {strict_mode})")
         run_input = {
             "searchStringsArray": [query],
@@ -149,10 +128,22 @@ async def start_scan(payload: ScanRequest):
                 
                 # --- PROCESSING ---
                 speed = get_real_pagespeed(website)
-                tech = detect_tech_stack(website) 
+                tech = tech_detector.detect(website)
                 scraped_data = scrape_company_website(website)
                 has_ssl = website.startswith("https")
-                is_qualified = speed < 50 or not has_ssl or tech['is_wordpress']
+                
+                # QUALIFICATION LOGIC MATCHING USER REQUEST:
+                # 1. PageSpeed < 50 (Only if speed is successfully fetched)
+                # 2. No SSL
+                # 3. Is WordPress
+                # 4. No Agents Detected (If they don't have an agent, they are a lead)
+                
+                has_agent = len(tech.get('agents', [])) > 0
+                
+                # Check speed qualification only if we have a valid score
+                is_slow = (speed is not None) and (speed < 50)
+                
+                is_qualified = is_slow or not has_ssl or tech['is_wordpress'] or not has_agent
                 
                 processed_items.append({
                     "name": item.get('title'),
@@ -164,7 +155,13 @@ async def start_scan(payload: ScanRequest):
                     "has_ssl": has_ssl,
                     "pagespeed_score": speed,
                     "is_wordpress": tech['is_wordpress'],
-                    "crm_system": tech['crm'], 
+                    "crm_system": ", ".join(tech['crm']) if tech['crm'] else None,
+                    "tech_stack": {
+                        "cms": tech['cms'],
+                        "frontend": tech['frontend'],
+                        "ecommerce": tech['ecommerce'],
+                        "agents": tech.get('agents', [])
+                    },
                     "emails": scraped_data['emails'],
                     "socials": scraped_data['socials'],
                     "description": scraped_data['description'],
