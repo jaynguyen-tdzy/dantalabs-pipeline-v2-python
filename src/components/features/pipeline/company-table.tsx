@@ -32,17 +32,17 @@ export function CompanyTable({ data }: { data: Company[] }) {
   };
 
   return (
-    <div className="rounded-md border bg-white shadow-sm">
+    <div className="rounded-md border bg-white shadow-sm overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
             {/* Cập nhật Header sang màu đen đậm */}
-            <TableHead className="text-black font-bold">Company Name</TableHead>
-            <TableHead className="text-black font-bold">Website Audit</TableHead>
-            <TableHead className="text-black font-bold">Socials</TableHead>
-            <TableHead className="text-black font-bold">Performance</TableHead>
-            <TableHead className="text-black font-bold">Status</TableHead>
-            <TableHead className="text-right text-black font-bold">Actions</TableHead>
+            <TableHead className="text-black font-bold whitespace-nowrap">Company Name</TableHead>
+            <TableHead className="text-black font-bold whitespace-nowrap">Website Audit</TableHead>
+            <TableHead className="text-black font-bold whitespace-nowrap">Socials</TableHead>
+            <TableHead className="text-black font-bold whitespace-nowrap">Performance</TableHead>
+            <TableHead className="text-black font-bold whitespace-nowrap">Status</TableHead>
+            <TableHead className="text-right text-black font-bold whitespace-nowrap">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -50,7 +50,7 @@ export function CompanyTable({ data }: { data: Company[] }) {
             <TableRow key={company.id}>
               {/* Column 1: Name & Website */}
               <TableCell className="font-medium text-black">
-                <div className="text-base font-bold">{company.name}</div>
+                <div className="text-sm font-bold">{company.name}</div>
                 {company.website_url && (
                   <a
                     href={company.website_url}
@@ -67,11 +67,11 @@ export function CompanyTable({ data }: { data: Company[] }) {
               <TableCell>
                 <div className="flex items-center gap-2">
                   {company.has_ssl ? (
-                    <Badge variant="outline" className="border-green-600 bg-green-50 text-green-700 gap-1 font-bold">
+                    <Badge variant="outline" className="border-green-600 bg-green-50 text-green-700 gap-1 font-bold text-xs">
                       <Lock className="h-3 w-3" /> Secure
                     </Badge>
                   ) : (
-                    <Badge variant="destructive" className="gap-1 font-bold">
+                    <Badge variant="destructive" className="gap-1 font-bold text-xs">
                       <Unlock className="h-3 w-3" /> No SSL
                     </Badge>
                   )}
@@ -90,7 +90,7 @@ export function CompanyTable({ data }: { data: Company[] }) {
                   </div>
                   {company.emails && company.emails.length > 0 && (
                     <span className="text-xs text-slate-600 font-medium">
-                      📧 {company.emails.length} emails found
+                      📧 {company.emails.length} emails
                     </span>
                   )}
                 </div>
@@ -98,7 +98,7 @@ export function CompanyTable({ data }: { data: Company[] }) {
 
               {/* Column 4: PageSpeed Score */}
               <TableCell>
-                <div className={`flex items-center gap-1 text-base ${getScoreColor(company.pagespeed_score)}`}>
+                <div className={`flex items-center gap-1 text-sm ${getScoreColor(company.pagespeed_score)}`}>
                   <Gauge className="h-4 w-4" />
                   <span>{company.pagespeed_score ?? "Error"}/100</span>
                 </div>
@@ -106,7 +106,7 @@ export function CompanyTable({ data }: { data: Company[] }) {
 
               {/* Column 4: Status */}
               <TableCell>
-                <Badge className={`${getStatusColor(company.status)} font-bold`}>
+                <Badge className={`${getStatusColor(company.status)} font-bold text-xs`}>
                   {company.status}
                 </Badge>
               </TableCell>
@@ -114,8 +114,8 @@ export function CompanyTable({ data }: { data: Company[] }) {
               {/* Column 5: Actions (Details Button) */}
               <TableCell className="text-right">
                 <Link href={`/companies/${company.id}`}>
-                  <Button variant="ghost" size="sm" className="gap-2 text-black hover:text-black hover:bg-gray-100 font-semibold">
-                    Details <ArrowRight className="h-4 w-4" />
+                  <Button variant="ghost" size="sm" className="gap-2 text-black hover:text-black hover:bg-gray-100 font-semibold text-xs">
+                    Details <ArrowRight className="h-3 w-3" />
                   </Button>
                 </Link>
               </TableCell>
