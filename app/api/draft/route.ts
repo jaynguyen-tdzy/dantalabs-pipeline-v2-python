@@ -12,12 +12,12 @@ export async function POST(request: Request) {
       pythonUrl = `${protocol}://${host}${pythonUrl}`;
     }
 
-    console.log(`🚀 Proxying DRAFT to Python: ${pythonUrl}/draft`);
+    console.log(`🚀 Proxying DRAFT to Python: ${pythonUrl}/draft/`);
 
     // Fix: Forward Cookies to bypass Vercel Authentication Protection
     const cookieHeader = request.headers.get("cookie") || "";
 
-    const res = await fetch(`${pythonUrl}/draft`, {
+    const res = await fetch(`${pythonUrl}/draft/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
