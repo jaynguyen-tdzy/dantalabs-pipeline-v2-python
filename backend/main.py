@@ -7,7 +7,16 @@ from dotenv import load_dotenv
 # --- FIX: Load biến môi trường NGAY LẬP TỨC ---
 load_dotenv()
 
-# Import routers sau khi đã load env
+# --- FIX: Add current directory to sys.path for Vercel ---
+import sys
+from pathlib import Path
+
+# Thêm thư mục chứa main.py vào sys.path để Python tìm thấy module 'routers'
+ROOT_DIR = Path(__file__).resolve().parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.append(str(ROOT_DIR))
+
+# Import routers sau khi đã load env và fix path
 from routers import scan, enrich, draft, contacts
 
 app = FastAPI(
