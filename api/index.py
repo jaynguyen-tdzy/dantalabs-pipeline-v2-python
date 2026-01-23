@@ -1,4 +1,4 @@
 from backend.main import app
 
-# Vercel Serverless Function Entry Point
-# This exposes the FastAPI app instance to Vercel's Python environment
+# Fix 404: Tell FastAPI it is running behind a path prefix on Vercel
+app.root_path = "/api/python"
