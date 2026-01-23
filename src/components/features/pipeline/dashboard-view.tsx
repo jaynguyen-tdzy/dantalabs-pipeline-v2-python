@@ -39,7 +39,6 @@ export function DashboardView({ initialCompanies, contacts }: DashboardViewProps
     : initialCompanies.filter(c => (c.search_keyword || c.industry || "Uncategorized") === selectedCampaign);
 
   return (
-  return (
     <div className="space-y-4">
 
       {/* KHU VỰC BỘ LỌC (DROPDOWN) */}
