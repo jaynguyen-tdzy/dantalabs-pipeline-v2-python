@@ -27,7 +27,7 @@ DANTA_PROFILE = """
   - FOUNDERS: Samuel & Santiago.
 """
 
-@router.post("/")
+@router.post("")
 async def generate_draft(payload: DraftRequest):
     print(f"✍️ Drafting email for: {payload.contactName} at {payload.companyName}")
     

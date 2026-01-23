@@ -14,12 +14,12 @@ export async function POST(request: Request) {
       pythonUrl = `${protocol}://${host}${pythonUrl}`;
     }
 
-    console.log(`🚀 Proxying ENRICH to Python: ${pythonUrl}/enrich/`);
+    console.log(`🚀 Proxying ENRICH to Python: ${pythonUrl}/enrich`);
 
     // Fix: Forward Cookies to bypass Vercel Authentication Protection
     const cookieHeader = request.headers.get("cookie") || "";
 
-    const res = await fetch(`${pythonUrl}/enrich/`, {
+    const res = await fetch(`${pythonUrl}/enrich`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

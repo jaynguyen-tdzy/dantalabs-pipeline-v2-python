@@ -54,7 +54,7 @@ def get_real_pagespeed(url: str):
 
 # (Empty - removed old detect_tech_stack function)
 
-@router.post("/")
+@router.post("")
 async def start_scan(payload: ScanRequest):
     print(f"🔍 Scan: {payload.keyword} in {payload.location}")
     

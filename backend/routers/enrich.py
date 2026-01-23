@@ -22,7 +22,7 @@ class EnrichRequest(BaseModel):
     companyId: str
     companyName: str
 
-@router.post("/")
+@router.post("")
 async def enrich_company(payload: EnrichRequest):
     print(f"🕵️‍♂️ AI Enriching Decision Makers for: {payload.companyName}")
     
