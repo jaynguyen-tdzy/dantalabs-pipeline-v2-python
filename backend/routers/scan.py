@@ -30,7 +30,7 @@ google_api_key = os.getenv("GOOGLE_API_KEY")
 
 class ScanRequest(BaseModel):
     keyword: str
-    location: str = "Ho Chi Minh City"
+    location: str | None = None
     limit: int = 5
 
 def get_real_pagespeed(url: str):
@@ -56,15 +56,19 @@ def get_real_pagespeed(url: str):
 
 @router.post("")
 async def start_scan(payload: ScanRequest):
-    print(f"🔍 Scan: {payload.keyword} in {payload.location}")
+    location_str = payload.location if payload.location else "Global"
+    print(f"🔍 Scan: {payload.keyword} in {location_str}")
     
     # ... (Optimization logic remains same) ...
     # 0. Tối ưu từ khóa tìm kiếm bằng Gemini
     gemini_client = GeminiClient()
     tech_detector = TechStackDetector()
-    optimized_data = gemini_client.optimize_search_term(payload.keyword, payload.location)
     
-    search_query = f"{payload.keyword} in {payload.location}" # Fallback
+    # Only optimize if location is provided, else just optimize keyword
+    optimized_data = gemini_client.optimize_search_term(payload.keyword, location_str)
+    
+    search_query = f"{payload.keyword} in {location_str}" if payload.location else payload.keyword
+    
     if optimized_data and optimized_data.get("q"):
         search_query = optimized_data["q"]
         print(f"✨ Optimized Scan Query: {search_query} (Original: {payload.keyword})")
@@ -91,26 +95,25 @@ async def start_scan(payload: ScanRequest):
 
             processed_items = []
             
-            # Normalize location key safely
-            raw_loc = payload.location.lower()
-            norm_loc = normalize_text(raw_loc)
-            
-            # Define aliases
-            valid_locs = [raw_loc, norm_loc]
-            
-            # 1. Handle "City" stripped version (e.g. "Ho Chi Minh City" -> "Ho Chi Minh")
-            if "city" in norm_loc:
-                valid_locs.append(norm_loc.replace("city", "").strip())
+            valid_locs = []
+            # Only set up strict filtering if a location is provided
+            if payload.location:
+                # Normalize location key safely
+                raw_loc = payload.location.lower()
+                norm_loc = normalize_text(raw_loc)
                 
-            # 2. Specific aliases for HCMC
-            if "ho chi minh" in norm_loc or "hcm" in norm_loc:
-                valid_locs.extend(["hcm", "hc", "saigon", "sai gon", "tp.hcm", "tphcm", "thanh pho ho chi minh"])
+                # Define aliases
+                valid_locs = [raw_loc, norm_loc]
                 
-            print(f"DEBUG: Valid Locations: {valid_locs}")
+                # 1. Handle "City" stripped version (e.g. "Ho Chi Minh City" -> "Ho Chi Minh")
+                if "city" in norm_loc:
+                    valid_locs.append(norm_loc.replace("city", "").strip())
+                    
+                print(f"DEBUG: Valid Locations: {valid_locs}")
 
             for item in items:
-                # --- STRICT LOCATION CHECK (Only if strict_mode is True) ---
-                if strict_mode:
+                # --- STRICT LOCATION CHECK (Only if strict_mode is True AND location is provided) ---
+                if strict_mode and payload.location:
                     address = item.get('address')
                     if not address: continue
 
@@ -183,12 +186,15 @@ async def start_scan(payload: ScanRequest):
     
     if not processed:
         print("⚠️ No valid results found. Attempting fallback...")
-        suggestion = gemini_client.suggest_better_query(payload.keyword, payload.location)
+        location_context = payload.location if payload.location else "Global"
+        suggestion = gemini_client.suggest_better_query(payload.keyword, location_context)
         
         if suggestion:
             print(f"💡 Fallback Query Suggestion: {suggestion}")
             # Relax strict check for fallback to ensure we get results
-            processed = await perform_search(f"{suggestion} in {payload.location}", strict_mode=False)
+            # Construct fallback query properly
+            fallback_query = f"{suggestion} in {location_context}" if payload.location else suggestion
+            processed = await perform_search(fallback_query, strict_mode=False)
             if processed:
                 is_fallback = True
 
@@ -207,7 +213,7 @@ async def start_scan(payload: ScanRequest):
         
     response = {
         "success": False, 
-        "message": f"No valid results found in {payload.location} even after fallback.",
+        "message": f"No valid results found in {location_str} even after fallback.",
         "suggestion": suggestion
     }
     print(f"❌ returning failure: {response}")

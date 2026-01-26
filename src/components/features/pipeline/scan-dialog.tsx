@@ -20,6 +20,7 @@ import { Loader2 } from "lucide-react";
 export function ScanDialog() {
   const [open, setOpen] = useState(false);
   const [keyword, setKeyword] = useState("");
+  const [location, setLocation] = useState("");
   const [loading, setLoading] = useState(false);
   // States cho error/suggestion
   const [message, setMessage] = useState<string | null>(null);
@@ -36,7 +37,10 @@ export function ScanDialog() {
     try {
       const res = await fetch("/api/scan", {
         method: "POST",
-        body: JSON.stringify({ keyword }),
+        body: JSON.stringify({
+          keyword,
+          location: location.trim() || undefined
+        }),
       });
 
       const data = await res.json();
@@ -96,10 +100,23 @@ export function ScanDialog() {
             </Label>
             <Input
               id="keyword"
-              placeholder="e.g. Real Estate in Hanoi"
+              placeholder="e.g. Real Estate"
               className="col-span-3"
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
+            />
+          </div>
+
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="location" className="text-right">
+              Location
+            </Label>
+            <Input
+              id="location"
+              placeholder="e.g. Hanoi, Vietnam (Optional)"
+              className="col-span-3"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
             />
           </div>
 
